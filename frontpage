@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+ <!-- <charset="utf-8">-->
+ <body>
+  <link a href="style.css">
+<center><b>
+<h2>AKeyCode</h2>
+<link a href="scripts.js"/>
+</b>
+<input type="search"  placeholder="搜索" width="220px" height="50px"/></center>
+<article>
+<p>
+<font color="#ff0033">Since 2019.April.10th<p>by   ytz</font>
+</p>
+你想....<p>
+<li><a href>查看我的git仓库？</a><li> <a href>
+发邮件？ </a>
+<li> <a href>留言？ </a> </li>
+</article></body>
+</html>
