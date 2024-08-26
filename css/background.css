@@ -1,0 +1,44 @@
+@font-face {
+    font-family:'Songti';
+    src: url('../font/飞花宋体.ttf');
+}
+body{
+    font-family:'Songti';
+}
+.highlight .bash{
+    font-family: monospace;
+}
+#subtitle {
+    font-size: 32pt;
+    color: #ffffff; 
+    font-family:'Songti';
+    font-weight: bolder; 
+    opacity: .5;
+    text-shadow: 1px 1px 2px rgb(0, 0, 0), 0 0 1em rgb(0, 0, 0), 0 0 0.2em rgb(0, 0, 0);
+}
+#site-info #site-title{
+    display: none;
+}
+#nav{ 
+    color: black;
+}
+.avatar-img{
+    border: solid 5px rgb(255, 0, 162);
+    cursor: pointer;
+}
+.aside-content #card-info-btn{
+    background: rgb(28, 99, 213);
+    color: #ffffff;
+}
+::selection{
+    background-color: rgb(227, 18, 140);
+}
+.pagination .page-number{
+    border-radius:100%;
+}
+.current{
+    background-color: blue;
+}
+.article-title{
+    color: crimson;
+}
