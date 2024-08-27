@@ -9,12 +9,18 @@ body{
     font-family: monospace;
 }
 #subtitle {
-    font-size: 32pt;
+    cursor: pointer;
+    font-size: 16pt;
     color: #ffffff; 
-    font-family:'Songti';
-    font-weight: bolder; 
+    font-family:'Songti'; 
     opacity: .5;
     text-shadow: 1px 1px 2px rgb(0, 0, 0), 0 0 1em rgb(0, 0, 0), 0 0 0.2em rgb(0, 0, 0);
+}
+#subtitle::before{
+    content: '- ';
+}
+#subtitle::after{
+    content: "-";
 }
 #site-info #site-title{
     display: none;
@@ -31,14 +37,8 @@ body{
     color: #ffffff;
 }
 ::selection{
-    background-color: rgb(227, 18, 140);
+    background: rgba(28, 99, 213, 0.463);
 }
-.pagination .page-number{
-    border-radius:100%;
-}
-.current{
-    background-color: blue;
-}
-.article-title{
-    color: crimson;
+a{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
