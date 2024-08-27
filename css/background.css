@@ -42,3 +42,6 @@ body{
 a{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
+.bash .line::before{
+    content: '$ ';
+}
