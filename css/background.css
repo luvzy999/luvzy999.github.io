@@ -2,6 +2,12 @@
     font-family:'Songti';
     src: url('../font/飞花宋体.ttf');
 }
+.full_page::after{
+    content: '';
+    color: #ffffff; 
+    font-weight: bolder;
+    font-size: 8pt; 
+}
 body{
     font-family:'Songti';
 }
@@ -43,5 +49,5 @@ a{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 .code pre::before{
-    content: '$ ';
+    content: '> ';
 }
