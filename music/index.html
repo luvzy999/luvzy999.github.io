@@ -1,921 +1,193 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>云音乐 - Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PingFang+SC:wght@400;500;600;700&display=swap" />
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-
-      :root {
-        --bg: #f5f5f7;
-        --panel: rgba(255, 255, 255, 0.86);
-        --panel-strong: rgba(255, 255, 255, 0.95);
-        --line: rgba(18, 18, 18, 0.08);
-        --text: #202020;
-        --text-soft: #666;
-        --light: #fafafa;
-        --shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
-        --primary: #d33a31;
-        --primary-soft: rgba(211, 58, 49, 0.12);
-        --secondary: #2f3136;
-      }
-
-      html, body {
-        margin: 0;
-        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-        background:
-          radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 30%),
-          linear-gradient(120deg, #f8f8fb 0%, #f1f0f5 100%);
-        color: var(--text);
-      }
-
-      body {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 38px 22px;
-      }
-
-      .app {
-        width: min(1200px, 100%);
-        min-height: 820px;
-        background: rgba(255, 255, 255, 0.44);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: var(--shadow);
-        border-radius: 26px;
-        overflow: hidden;
-      }
-
-      .topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 82px;
-        padding: 0 34px;
-        background: rgba(255, 255, 255, 0.6);
-        border-bottom: 1px solid var(--line);
-      }
-
-      .brand-wrap {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-
-      .logo {
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #ff5858, #d33a31 60%, #b11f1a);
-        position: relative;
-        box-shadow: 0 10px 18px rgba(211, 58, 49, 0.28);
-      }
-
-      .logo::before {
-        content: "";
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 50%;
-        left: 12px;
-        top: 12px;
-        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
-      }
-
-      .logo::after {
-        content: "";
-        position: absolute;
-        width: 2px;
-        height: 18px;
-        background: rgba(255, 255, 255, 0.85);
-        right: 11px;
-        top: 11px;
-        border-radius: 2px;
-        transform: rotate(25deg);
-      }
-
-      .brand-name {
-        font-size: 1.1rem;
-        font-weight: 700;
-      }
-
-      .nav {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-        margin-left: 30px;
-        flex: 1;
-      }
-
-      .nav-item {
-        position: relative;
-        color: var(--text-soft);
-        font-size: 0.96rem;
-        padding: 10px 12px;
-        border-radius: 12px;
-        transition: 0.2s ease;
-        cursor: pointer;
-      }
-
-      .nav-item.active {
-        color: var(--text);
-        background: rgba(20, 18, 18, 0.04);
-        font-weight: 600;
-      }
-
-      .nav-item.active::after {
-        content: "";
-        position: absolute;
-        width: 6px;
-        height: 6px;
-        background: var(--primary);
-        border-radius: 50%;
-        right: 10px;
-        top: 8px;
-      }
-
-      .topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .search {
-        width: 250px;
-        height: 38px;
-        border-radius: 20px;
-        background: rgba(14, 14, 15, 0.04);
-        border: 1px solid rgba(0,0,0,0.03);
-        display: flex;
-        align-items: center;
-        padding: 0 14px;
-        color: #8a8a8a;
-      }
-
-      .search input {
-        width: 100%;
-        border: none;
-        outline: none;
-        background: transparent;
-        font-size: 0.9rem;
-        color: var(--text);
-      }
-
-      .avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #8ac4ff, #3c74ff);
-        box-shadow: 0 10px 18px rgba(64, 116, 255, 0.25);
-      }
-
-      .content { 
-        display: grid;
-        grid-template-columns: 0.8fr 1.2fr;
-        min-height: 738px; 
-      }
-
-      .main-panel {
-        padding: 34px 34px 0;
-      }
-
-      .player-shell {
-        background: linear-gradient(180deg, rgba(243, 121, 121, 0.68), rgba(255,255,255,0.32));
-        border: 1px solid rgba(255,255,255,0.6);
-        border-radius: 28px;
-        padding: 26px 24px 18px;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
-      }
-
-      .song-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-      }
-
-      .song-tags {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .tag {
-        font-size: 0.72rem;
-        padding: 5px 10px;
-        border-radius: 999px;
-        background: rgba(211, 58, 49, 0.08);
-        color: var(--primary);
-        border: 1px solid rgba(211, 58, 49, 0.16);
-      }
-
-      .song-actions {
-        display: flex;
-        align-items: center;
-        gap: 10px; 
-      }
-
-      .icon-btn {
-        width: 34px;
-        height: 34px;
-        display: grid;
-        place-items: center;
-        border-radius: 50%;
-        background: rgba(15, 15, 15, 0.04);
-        color: var(--text);
-        cursor: pointer;
-      }
-
-      .player-stage {
-        display: flex;
-        gap: 30px;
-        align-items: center;
-        padding: 18px 8px 10px;
-      }
-
-      .cover-wrap {
-        position: relative;
-        width: 430px;
-        height: 430px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .cover-ring {
-        position: absolute;
-        inset: 18px;
-        border-radius: 50%;
-        background: radial-gradient(circle at center, rgba(255,255,255,0.96), rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.06) 60%, rgba(0,0,0,0.14));
-        border: 1px solid rgba(255,255,255,0.8);
-        box-shadow: 0 30px 50px rgba(0, 0, 0, 0.14);
-      }
-
-      .disc {
-        position: relative;
-        width: 302px;
-        height: 302px;
-        border-radius: 50%;
-        background: radial-gradient(circle at center, #0d1017 0%, #171b22 22%, #0b0d12 40%, #040508 100%);
-        box-shadow: inset 0 0 50px rgba(255,255,255,0.08), 0 25px 38px rgba(0,0,0,0.25);
-      }
-
-      .disc::before {
-        content: "";
-        position: absolute;
-        inset: 86px;
-        border-radius: 50%;
-        background: radial-gradient(circle at center, #f6f8fb, #d7dbe3 52%, #c5cad0 100%);
-        box-shadow: inset 0 0 0 6px rgba(29,32,37,0.1);
-      }
-
-      .disc::after {
-        content: "";
-        position: absolute;
-        width: 34px;
-        height: 34px;
-        background: linear-gradient(135deg, #f2f3f7, #c9ced6);
-        border-radius: 50%;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        box-shadow: inset 0 0 0 5px rgba(17,17,17,0.12);
-      }
-
-      .album-art {
-        position: absolute;
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        background-size: cover;
-        background-position: center;
-        border: 8px solid rgba(255,255,255,0.7);
-        box-shadow: 0 12px 20px rgba(0,0,0,0.2);
-      }
-
-      .album-data {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .title-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-
-      .track-title {
-        font-size: clamp(2rem, 2.8vw, 3rem);
-        line-height: 1.1;
-        font-weight: 700;
-        letter-spacing: -0.04em;
-        margin: 0;
-      }
-
-      .vip {
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        background: rgba(255, 165, 0, 0.14);
-        color: #c77800;
-        font-weight: 600;
-      }
-
-      .artist-line {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--text-soft);
-        margin-bottom: 18px; 
-        overflow: hidden;
-      }
-
-      .artist-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(17,17,17,0.04);
-        border-radius: 999px;
-        padding: 8px 12px;
-        font-size: 0.64rem;
-        overflow: hidden; 
-      }
-
-      .artist-avatar {
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #ffd38b, #ff9fb1);
-      }
-
-      .description {
-        color: #5c5c5c;
-        line-height: 1.8;
-        max-width: 540px;
-        margin-bottom: 18px;
-      }
-
-      .stats {
-        display: flex;
-        gap: 25px;
-        color: var(--text-soft);
-        font-size: 0.9rem;
-        margin-bottom: 22px;
-      }
-
-      .stat strong {
-        color: var(--text);
-      }
-
-      .player-controls {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        margin-top: 12px;
-      }
-
-      .control-btn {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: rgba(0,0,0,0.04);
-        color: var(--text);
-        cursor: pointer;
-        transition: 0.2s ease;
-      }
-
-      .control-btn.primary {
-        width: 72px;
-        height: 72px;
-        background: linear-gradient(135deg, #ff6662, #d33a31);
-        color: white;
-        box-shadow: 0 18px 26px rgba(211, 58, 49, 0.25);
-      }
-
-      .progress-area {
-        flex: 1;
-      }
-
-      .time-line {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 12px;
-      }
-
-      .time {
-        color: var(--text-soft);
-        font-size: 0.84rem;
-        min-width: 44px;
-      }
-
-      .bar {
-        flex: 1;
-        height: 6px;
-        border-radius: 999px;
-        background: rgba(18, 18, 18, 0.08);
-        position: relative;
-        overflow: hidden;
-      }
-
-      .bar-fill {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 34%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #ff6d6d, var(--primary));
-      }
-
-      .bar-fill::after {
-        content: "";
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: white;
-        right: -4px;
-        top: 50%;
-        transform: translateY(-50%);
-        box-shadow: 0 0 0 3px rgba(211,58,49,0.2);
-      }
-
-      .side-panel {
-        padding: 28px 18px 8px 0;
-        overflow: hidden; 
-      }
-
-      .playlist {
-        background: rgba(255,255,255,0.38);
-        border: 1px solid rgba(255,255,255,0.6);
-        border-radius: 22px;
-        height: calc(100% - 20px);
-        padding: 20px 16px;
-         overflow:scroll; 
-         position: absolute;
-      }
-
-      .playlist-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px; 
-      }
-
-      .playlist-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-      }
-
-      .playlist-badge {
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 0.74rem;
-        background: rgba(17,17,17,0.04);
-        color: var(--text-soft);
-      }
-
-      .playlist-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        margin-top: 12px;
-        overflow-y: scroll;
-      }
-
-      .playlist-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 12px;
-        border-radius: 14px;
-        cursor: pointer;
-        font-size: 0.4rem;
-        transition: 0.2s ease;
-      }
-
-      .playlist-item:hover {
-        background: rgba(17,17,17,0.03);
-      }
-
-      .playlist-item.active {
-        background: linear-gradient(90deg, rgba(211,58,49,0.08), rgba(255,255,255,0.4));
-        border: 1px solid rgba(211,58,49,0.08);
-      }
-
-      .song-cover {
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        object-fit: cover;
-        flex-shrink: 0;
-      }
-
-      .track-info {
-        font-size: 0.3rem;
-        flex: 1;
-        min-width: 0;
-      }
-
-      .track-name {
-        display: block;
-        font-size: 0.97rem;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .track-artist {
-        display: block;
-        margin-top: 3px;
-        font-size: 0.75rem;
-        color: var(--text-soft);
-      }
-
-      .duration {
-        color: var(--text-soft);
-        font-size: 0.77rem;
-      }
-
-      .bottom-bar {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 90px;
-        background: rgba(255, 255, 255, 0.72);
-        backdrop-filter: blur(14px);
-        border-top: 1px solid rgba(0,0,0,0.06);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 28px;
-      }
-
-      .mini-player {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-      }
-
-      .mini-cover {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        background-size: cover;
-        background-position: center;
-        box-shadow: 0 8px 18px rgba(0,0,0,0.15);
-      }
-
-      .mini-text {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .mini-title {
-        font-weight: 700;
-      }
-
-      .mini-sub {
-        font-size: 0.75rem;
-        color: var(--text-soft);
-      }
-
-      .bottom-controls {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-
-      .circle-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: rgba(17,17,17,0.04);
-        color: var(--text);
-      }
-
-      .circle-btn.primary {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 12px 18px rgba(211, 58, 49, 0.25);
-      }
-
-      .bottom-progress {
-        width: 540px;
-        max-width: 42vw;
-      }
-
-      .bottom-progress .bar {
-        height: 4px;
-      }
-
-      @media (max-width: 980px) {
-        .content {
-          grid-template-columns: 1fr;
-        }
-
-        .side-panel {
-          padding: 0 34px 90px;
-        }
-
-        .playlist {
-          min-height: 260px;
-        }
-
-        .player-stage {
-          flex-direction: column;
-          text-align: center;
-        }
-
-        .cover-wrap {
-          width: 330px;
-          height: 330px;
-        }
-
-        .album-data {
-          width: 100%;
-        }
-
-        .description {
-          max-width: 100%;
-        }
-
-        .stats {
-          justify-content: center;
-        }
-      }
-
-      @media (max-width: 640px) {
-        .topbar {
-          flex-wrap: wrap;
-          height: auto;
-          padding: 18px 20px;
-          gap: 12px;
-        }
-
-        .nav {
-          order: 3;
-          width: 100%;
-          justify-content: space-between;
-          margin: 0;
-        }
-
-        .search {
-          width: 180px;
-        }
-
-        .main-panel {
-          padding: 18px 18px 0;
-        }
-
-        .player-shell {
-          padding: 18px 14px 10px;
-        }
-
-        .cover-wrap {
-          width: 260px;
-          height: 260px;
-        }
-
-        .disc {
-          width: 240px;
-          height: 240px;
-        }
-
-        .album-art {
-          width: 124px;
-          height: 124px;
-        }
-
-        .bottom-bar {
-          padding: 0 16px;
-        }
-
-        .bottom-progress {
-          width: 210px;
-          max-width: 28vw;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-
-      <main class="content">
-        <section class="main-panel">
-          <div class="player-shell">
-            <div class="song-meta">
-              <div class="song-tags">
-                <!-- <span class="tag">华语</span>
-                <span class="tag">流行</span>
-                <span class="tag">精选</span> -->
-              </div>
-            </div>
-
-            <div class="player-stage">
-              <div class="cover-wrap" aria-label="专辑封面">
-                <div class="cover-ring"></div>
-                <div class="disc"></div>
-                <div class="album-art" id="albumArt"></div>
-              </div>
-
-              <div class="album-data">
-                <div class="title-row">
-                  <h1 class="track-title" id="trackTitle">晚风</h1>
-                  <span class="vip">VIP</span>
-                </div>
-
-                <div class="artist-line">
-                  <div class="artist-pill">
-                    <span class="artist-avatar"></span>
-                    <span id="artistName">陈奕迅</span>
-                  </div>
-                  <span>发行于 2025-07-21</span>
-                </div>
-
-                <div class="description" id="trackDescription">
-                  这一场夜风吹过，带着城市的喧嚣，也把你的温柔慢慢藏进了回忆里。
-                </div>
-
-                <div class="player-controls">
-                  <div class="control-btn" aria-label="上一曲">⏮</div>
-                  <div class="control-btn primary" id="playToggle" aria-label="播放/暂停">▶</div>
-                  <div class="control-btn" aria-label="下一曲">⏭</div> 
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <aside class="side-panel">
-          <div class="playlist">
-            <div class="playlist-header">
-               <div class="playlist-badge"></div>  
-            </div>
-
-            <ul class="playlist-list" id="playlistList"></ul>
-          </div>
-        </aside>
-      </main>
-
-      <footer class="bottom-bar">
-        <div class="mini-player">
-          <div class="mini-cover" id="miniCover"></div>
-          <div class="mini-text">
-            <span class="mini-title" id="miniTitle">晚风</span>
-            <span class="mini-sub" id="miniArtist">陈奕迅</span>
-          </div>
-        </div>
-
-        <div class="bottom-controls">
-          <div class="circle-btn">⏮</div>
-          <div class="circle-btn primary" id="miniPlayToggle">▶</div>
-          <div class="circle-btn">⏭</div>
-        </div>
-
-        <div class="bottom-progress">
-          <div class="bar">
-            <div class="bar-fill" id="bottomProgress"></div>
-          </div>
-        </div>
-      </footer>
-    </div>
-
-    <script>
-    var songs = [];
-      var list_size = 0;
-        $.ajax({
-          url: 'https://api.i-meto.com/meting/api?server=netease&type=playlist&id=470618814',
-          method: 'GET',
-          dataType: 'json',
-          success: function(data) {
-            console.log('Playlist data:', data);
-            songs = data;
-            list_size = data.length;
-            $('.playlist-badge').text(`${list_size}首`); // Clear existing playlist items
-          renderPlaylist();
-            // You can process the data here and update the UI accordingly
-          },
-          error: function(error) {
-            console.error('Error fetching playlist:', error);
-          }
-        });
-      
-      const playlistList = document.getElementById('playlistList');
-      const trackTitle = document.getElementById('trackTitle');
-      const artistName = document.getElementById('artistName');
-      const trackDescription = document.getElementById('trackDescription');
-      const playsEl = document.getElementById('plays');
-      const commentsEl = document.getElementById('comments');
-      const albumArt = document.getElementById('albumArt');
-      const miniCover = document.getElementById('miniCover');
-      const miniTitle = document.getElementById('miniTitle');
-      const miniArtist = document.getElementById('miniArtist');
-      const currentTimeEl = document.getElementById('currentTime');
-      const totalTimeEl = document.getElementById('totalTime');
-      const progressFill = document.getElementById('progressFill');
-      const bottomProgress = document.getElementById('bottomProgress');
-      const playToggle = document.getElementById('playToggle');
-      const miniPlayToggle = document.getElementById('miniPlayToggle');
-      let audio=new Audio();
-      audio.preload = true;
-      audio.loop = false;
-      audio.addEventListener(`ended`, () => {
-        console.log('playToggle event triggered');
-      
-      });
-
-      let activeIndex = 0;
-      let isPlaying = true;
-
-      function renderPlaylist() {
-        playlistList.innerHTML = songs.map((item, index) => `
-          <li class="playlist-item ${index === activeIndex ? 'active' : ''}" data-index="${index}" style="height: 50px;width: 100%;">
-            <img class="song-cover" src="${item.pic}" alt="${item.title}" />
-            <div class="track-info" >
-              <span class="track-name" style="font-size: 0.8rem;">${item.title}</span>
-              <span class="track-artist" style="font-size: 0.8rem;">${item.author}</span>
-            </div>
-          </li>
-        `).join('');
-
-        playlistList.querySelectorAll('.playlist-item').forEach(item => {
-          item.addEventListener('click', () => {
-            activeIndex = Number(item.dataset.index);
-            updateTrack();
-          });
-        });
-      }
-
-      function formatTime(seconds) {
-        const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const secs = String(Math.floor(seconds % 60)).padStart(2, '0');
-        return `${mins}:${secs}`;
-      }
-
-      function updateTrack() {
-        var song = songs[activeIndex];
-            console.log('==========', song.pic);
-        trackTitle.textContent = song.title;
-        artistName.textContent = song.author;
-        trackDescription.textContent = song.lyric;
-        albumArt.style.backgroundImage = `url('${song.pic}')`;
-        miniCover.style.backgroundImage = `url('${song.pic}')`;
-        miniTitle.textContent = song.title;
-        miniArtist.textContent = song.author;
-        document.body.style.background = `radial-gradient(circle at top left, rgba(255,255,255,0.9), rgba(255,255,255,0) 30%), linear-gradient(120deg, #f8f8fb 0%, 100%)`;
-       
-      }
-
-      function togglePlay() {
-        isPlaying = !isPlaying;
-        const icon = isPlaying ? '❚❚' : '▶';
-        playToggle.textContent = icon;
-        miniPlayToggle.textContent = icon; 
-        audio.src = songs[activeIndex].url;
-        audio.play();
-      }
-
-      playToggle.addEventListener('click', togglePlay);
-      miniPlayToggle.addEventListener('click', togglePlay);
-
-      // currentTimeEl.textContent = '00:00';
-      // totalTimeEl.textContent = songs[0].duration;
-      updateTrack();
-
-      let progress = 34;
-      setInterval(() => {
-        if (!isPlaying) return;
-        progress += 0.25;
-        if (progress > 100) {
-          progress = 0;
-          activeIndex = (activeIndex + 1) % songs.length;
-          updateTrack();
-        }
-        const currentSeconds = (progress / 100) * 252;
-        currentTimeEl.textContent = formatTime(currentSeconds);
-        progressFill.style.width = `${progress}%`;
-        bottomProgress.style.width = `${progress}%`;
-      }, 1000);
-    </script>
-  </body>
-</html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <title>Music Player</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+    #app { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+    .player { padding: 20px; }
+    .controls { display: flex; justify-content: space-between; margin: 20px 0; }
+    button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 0 10px; }
+    button:hover { opacity: 0.9; }
+    .track-info { font-size: 18px; font-weight: bold; margin: 10px 0; }
+    .playlist ul {-ms-overflow-style: none;scrollbar-width: none; /* Firefox */ margin: 20px 0;overflow-y: hidden; max-height: 300px; border-top: 1px solid #eee; border-bottom: 1px solid #eee;}
+    .playlist ul::-webkit-scrollbar {
+      display: none;
+      }
+    .playlist ul { list-style: none; padding: 0;overflow-y: scroll; max-height: 300px; margin: 0; }
+    .playlist li { padding: 12px 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
+    .playlist li:hover { background: #f9f9f9; }
+    .lyrics { margin: 20px 0; font-size: 16px; line-height: 1.6;color: #ff00d4; }
+    .lyrics ul { list-style: none; padding: 0; overflow-y:hidden; max-height: 50px; margin: 10px;}
+    .lyrics li { padding: 6px 0; overflow-y:hidden; }
+    .progressbar { height: 5px; background: #eee; border-radius: 5px; overflow: hidden; margin-top: 10px; }
   
+  </style>
+</head>
+<body>
+  <div id="app">
+  
+    <div class="player">   
+      <div class="track-info">{{ currentTrack.title }} - {{ currentTrack.author }}</div>
+      <div class="controls">
+        <button @click="prevTrack">⏮</button>
+        <button @click=" playTrack">{{ playPauseText }}</button>
+        <button @click="nextTrack">⏭</button>
+     
+      </div>
+         <div class="progressbar">
+          <div class="thumb" style=" height:10px; background: #ff00d4; transition: width 0.1s;overflow: hidden;" :style="{ width: progressPercentage + '%' }"></div>
+         </div>
+      <div class="playlist">
+        <ul>
+          <li v-for="(track, index) in playlist" :key="index" :class="{ 'active': index === currentTrackIndex }" @click="selectTrack(index)">
+            {{ track.title }} - {{ track.author }}
+          </li>
+        </ul>
+      </div>
+      <div class="lyrics">
+        <ul>
+         <li>{{ currentLyric }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script> 
+  const mplayer = new Audio();
+  mplayer.preload = true;
+  mplayer.autoplay = true;
+  const instance = axios.create({
+  baseURL: 'https://api.i-meto.com/meting/',
+  timeout: 6000
+  });
+  const log = (...args) => {
+    console.log(...args);};
+    const requestMediaRes = async () => {
+        const response = await instance.get('api?server=netease&type=playlist&id=470618814', {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            // console.log('Fetched playlist:', response.data);
+            return response.data;
+        }).catch(error => {
+            console.error('Error fetching playlist:', error);
+            return [];
+        });
+        return response;
+    }; 
+  new Vue({
+    el: '#app',
+    data: {
+      playlist: [],//歌单
+      lrc: [],//歌词列表
+      currentTrackIndex: 0,//当前播放的歌曲索引
+      currentTrack: {},//当前播放的歌曲对象
+      playPauseText: '▶', // 播放/暂停按钮的文本
+      currentLyric: '',//当前播放的歌词
+      duration: 0,//当前播放的歌曲总时长
+      currentTime: 0,//当前播放的歌曲时间点
+      progressPercentage:0  //当前播放的歌曲进度百分比
+    },
+    methods: {
+      playTrack() {
+          if (mplayer.paused) {
+          mplayer.src = this.currentTrack.url;
+          mplayer.play();
+          this.showLrc();
+          this.progressUpdate();
+          this.playPauseText = '❚❚';
+        } else {
+          mplayer.pause();
+          this.playPauseText = '▶';
+        }
+      },
+      selectTrack(index) {
+        this.currentTrackIndex = index;
+        this.currentTrack = this.playlist[index];
+        this.playTrack();
+      },
+       
+      nextTrack() {
+        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
+        this.currentTrack = this.playlist[this.currentTrackIndex];
+        this.playTrack();
+      },
+      prevTrack() {
+        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length;
+        this.currentTrack = this.playlist[this.currentTrackIndex];
+        this.playTrack();
+      } ,
+      progressUpdate() {
+        const that = this;
+        const update = () => {
+          if (!mplayer.paused) {
+            that.currentTime = mplayer.currentTime;
+            that.duration = mplayer.duration;
+            that.progressPercentage = (that.currentTime / that.duration) * 100;
+            // that.currentLyric = that.lrc.find( <= that.currentTime)?.text || '';
+            that.updateLrc();
+            requestAnimationFrame(update);
+          }
+        };
+        requestAnimationFrame(update);
+      }, 
+      updateLrc(){
+        const lyric = this.lrc; 
+        for(var i=0;i<lyric.length;i++){
+          if(this.currentTime>=lyric[i].time&& (!lyric[i + 1] || this.currentTime < lyric[i + 1].time)){
+            this.currentLyric = lyric[i].text;
+          }
+        }
+      },
+      showLrc() {
+        //请求歌词数据
+       axios.get(this.playlist[this.currentTrackIndex].lrc)
+          .then(response => {
+            const lrcData = response.data;
+            const lines = lrcData.split('\n');//将请求结果拆分成行
+            const lrcLines = lines.map(line => {
+              const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
+              if (match) {
+                const minutes = parseInt(match[1], 10);
+                const seconds = parseInt(match[2], 10);
+                const milliseconds = parseInt(match[3], 10);
+                const text = match[4].trim();
+                return { time: minutes * 60 + seconds + milliseconds / 1000, text };
+              }
+              return null;
+            }).filter(line => line !== null);
+            this.lrc = lrcLines;//[{time,text}],
+          })
+          .catch(error => {
+            console.error('Error fetching lyrics:', error);
+          });
+      },
+      mediaRes(){
+        const that = this;
+        requestMediaRes().then(data => { 
+          if (data.length > 0) {
+             that.playlist = data;
+            //  console.log('Current track:', that.playlist[70].title, that.SSplaylist[0].author);
+             that.currentTrack = data[0];
+          } else {
+            console.log(currentTrack.title, currentTrack.author);
+          }
+        }).catch(error => {
+          console.error('Error in mediaRes:', error);
+        });
+      }
+    },
+    created() {
+      this.mediaRes(); 
+      
+    }
+  });
+  </script>
+</body>
+</html>
